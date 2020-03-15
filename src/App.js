@@ -49,11 +49,18 @@ class ShareOptions extends React.Component {
 class App extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {reply: '', images: [], showShare: false,
-        checked: [],
-        category: {id: undefined, name: 'ROOT', representative_picture_id: -1, id_uppercat: null},
-        categories: [],
-        categoryPath: []};
+        this.state = {
+            reply: '', 
+            showShare: false,
+            checked: [],
+            category: {
+                id: null, name: 'ROOT', representativePictureId: -1, idUppercat: null,
+                representativePicture: null,
+                childCats: [],
+                parentCats: [],
+                images: []
+            },
+        };
         
         this.gotoCategory();
     }
@@ -78,70 +85,23 @@ class App extends React.Component {
         req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         req.send();
     }
-
-    loadImages = (cat_id) => {
-        if(cat_id !== undefined) {
-            this.readServerString('/plugins/piwigo4blog/api/img-list.php?category=' + cat_id, function(err, res) {
-                if(!err) {
-                    this.setState({images: JSON.parse(res)});
-                } else {
-                    this.setState({images: []});
-                }
-            }.bind(this));
-        } else {
-            this.setState({images: []});
-        }
-    }
     
-    loadCategories = (cat_id) => {
-        var query_str = '/plugins/piwigo4blog/api/category-list.php';
+    loadCategory = (cat_id) => {
+        var query_str = '/plugins/piwigo4blog/api/category.php';
         if(cat_id !== undefined) {
             query_str += '?id='+cat_id;
         }
         this.readServerString(query_str, function(err, res) {
             if(!err) {
-                this.setState({categories: JSON.parse(res)});
+                this.setState({category: JSON.parse(res)});
             } else {
-                this.setState({categories: []});
+                this.setState({category: []});
             }
         }.bind(this));
     }
     
-    loadCategory = (cat_id) => {
-        if(cat_id !== undefined) {
-            var query_str = '/plugins/piwigo4blog/api/category-info.php?id='+cat_id;
-            this.readServerString(query_str, function(err, res) {
-                if(!err) {
-                    this.setState({category: JSON.parse(res)});
-                } else {
-                    this.setState({category: []});
-                }
-            }.bind(this));
-        } else {
-            this.setState({category: {id: undefined, name: 'ROOT', representative_picture_id: -1, id_uppercat: null}});
-        }
-    }
-    
-    loadCategoryPath = (cat_id) => {
-        if(cat_id !== undefined) {
-            var query_str = '/plugins/piwigo4blog/api/category-parent.php?id='+cat_id;
-            this.readServerString(query_str, function(err, res) {
-                if(!err) {
-                    this.setState({categoryPath: JSON.parse(res)});
-                } else {
-                    this.setState({categoryPath: []});
-                }
-            }.bind(this));
-        } else {
-            this.setState({categoryPath: []});
-        }
-    }
-    
     gotoCategory = (cat_id) => {
         this.loadCategory(cat_id);
-        this.loadCategoryPath(cat_id);
-        this.loadCategories(cat_id);
-        this.loadImages(cat_id);
     }
     
     handleClickShare = () => {
@@ -167,26 +127,23 @@ class App extends React.Component {
     
     render() {
         var selImages = [];
-        for(var i=0; i < this.state.images.length; i++) {
-            if(this.state.checked.indexOf(this.state.images[i].id) !== -1) {
-                selImages.push(this.state.images[i]);
+        for(var i=0; i < this.state.category.images.length; i++) {
+            if(this.state.checked.indexOf(this.state.category.images[i].id) !== -1) {
+                selImages.push(this.state.category.images[i]);
             }
         }
         
         return (
             <div style={{textAlign: 'center', marginTop: 30}}>
-                <p>
+                <div style={{textAlign: 'right'}}>
                     <span onClick={this.handleClickShare} style={styleBtn}>Встроить в блог</span>
-                </p>
-                <p style={{marginTop: 40, fontSize: 24}}>
-                    Результат: <span style={{fontStyle: 'italic'}}>{this.state.reply}</span> 
-                </p>
+                </div>
                 
-                <Breadcrumbs aria-label="breadcrumb">
-                    {this.state.category.id !== undefined && <Link color="inherit" onClick={() => this.gotoCategory()}>
+                <Breadcrumbs style={{marginBottom: 40}} aria-label="breadcrumb">
+                    {this.state.category.id !== null && <Link color="inherit" onClick={() => this.gotoCategory()}>
                         ROOT
                     </Link>}
-                    {this.state.categoryPath.map(catPathElem => {
+                    {this.state.category.parentCats.map(catPathElem => {
                         return (
                             <Link color="inherit" onClick={() => this.gotoCategory(catPathElem.id)}>
                                 {catPathElem.name}
@@ -194,32 +151,46 @@ class App extends React.Component {
                         );
                     })}
                     
-                    <Typography color="textPrimary">{this.state.category.name}</Typography>
+                    <Typography style={{fontWeight: 'bold'}} color="textPrimary">{this.state.category.name}</Typography>
                 </Breadcrumbs>
                 
-                {this.state.categories.length > 0 && <Grid container spacing={3}>
-                    {this.state.categories.map(cat => {
+                {this.state.category.childCats.length > 0 && <Grid container spacing={3}>
+                    {this.state.category.childCats.map(cat => {
                         return (
-                            <Grid item xs={4}>
-                                <Paper>
-                                    <div onClick={() => this.gotoCategory(cat.id)}>{cat.name}</div>
+                            /* 12-column grid layout: xs=3 => 4 cols; https://material-ui.com/components/grid/ */
+                            <Grid item xs={3}>
+                                <Paper style={{cursor: 'pointer', padding: 10, backgroundColor: '#DEDEDC', fontWeight: 'bold'}}>
+                                    <div onClick={() => this.gotoCategory(cat.id)}>
+                                        <div style={{height: 200}}>
+                                            {cat.representativePicture != null &&
+                                                <img style={{maxHeight: 200, maxWidth: 300}}
+                                                    src={cat.representativePicture.thumb}
+                                                    alt={cat.representativePicture.thumb}/>
+                                            }
+                                        </div>
+                                        <div>{cat.name}</div>
+                                    </div>
                                 </Paper>
                             </Grid>
                         );
                     })}
                 </Grid>}
                 
-                {this.state.images.length > 0 && <Grid container spacing={3}>
-                    {this.state.images.map(img => {
+                {this.state.category.images.length > 0 && <Grid container spacing={3}>
+                    {this.state.category.images.map(img => {
                         return (
-                            <Grid item xs={4}>
-                                <Paper onClick={() => this.handleToggle(img.id)}>
-                                    <Checkbox
-                                        color="primary"
-                                        checked={this.state.checked.indexOf(img.id) !== -1}
-                                    />
-                                    <img width={300} src={img.path} alt={img.file}/>
-                                    <div>{img.name}</div>
+                            /* 12-column grid layout: xs=3 => 4 cols; https://material-ui.com/components/grid/ */
+                            <Grid item xs={3}>
+                                <Paper style={{cursor: 'pointer', padding: 10}} onClick={() => this.handleToggle(img.id)}>
+                                    <div style={{height: 200}}>
+                                        <img style={{maxHeight: 200, maxWidth: 300}} src={img.thumb} alt={img.thumb}/>
+                                    </div>
+                                    <div>
+                                        <Checkbox
+                                            color="primary"
+                                            checked={this.state.checked.indexOf(img.id) !== -1}/>
+                                        {img.name}
+                                    </div>
                                 </Paper>
                             </Grid>
                         );
