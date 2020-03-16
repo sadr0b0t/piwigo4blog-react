@@ -1,5 +1,7 @@
 import React from 'react';
+import { withStyles } from '@material-ui/core/styles';
 import Breadcrumbs from '@material-ui/core/Breadcrumbs';
+import Pagination from '@material-ui/lab/Pagination';
 import Typography from '@material-ui/core/Typography';
 import Link from '@material-ui/core/Link';
 import Paper from '@material-ui/core/Paper';
@@ -18,7 +20,13 @@ var styleBtn = {
     cursor: 'pointer'
 }
 
-var SITE_ROOT = "https://fotki.sadrobot.su"
+// https://stackoverflow.com/questions/56554586/how-to-use-usestyle-to-style-class-component-in-material-ui
+const styles = theme => ({
+    paginationUl: {justifyContent: 'flex-end'}
+});
+
+const SITE_ROOT = window.location.protocol + "//" + window.location.host; //"https://fotki.sadrobot.su"
+const IMG_PAGE_SIZE = 100;
 
 class ShareOptions extends React.Component {
 
@@ -47,6 +55,7 @@ class ShareOptions extends React.Component {
 }
 
 class App extends React.Component {
+  
     constructor(props) {
         super(props);
         this.state = {
@@ -58,8 +67,10 @@ class App extends React.Component {
                 representativePicture: null,
                 childCats: [],
                 parentCats: [],
-                images: []
+                images: [],
+                img_count: 0
             },
+            page: 1
         };
         
         this.gotoCategory();
@@ -86,22 +97,42 @@ class App extends React.Component {
         req.send();
     }
     
-    loadCategory = (cat_id) => {
+    loadCategory = (cat_id, page) => {
         var query_str = '/plugins/piwigo4blog/api/category.php';
+        var img_params = "img_lim=" + IMG_PAGE_SIZE + "&img_offset=" + (IMG_PAGE_SIZE * (page-1));
         if(cat_id !== undefined) {
-            query_str += '?id='+cat_id;
+            query_str += '?id=' + cat_id + "&" + img_params;
+        } else {
+            query_str += '?' + img_params;
         }
+        
         this.readServerString(query_str, function(err, res) {
             if(!err) {
-                this.setState({category: JSON.parse(res)});
+                this.setState({category: JSON.parse(res), page: page});
             } else {
-                this.setState({category: []});
+                this.setState({category: [], page: page});
             }
         }.bind(this));
     }
     
     gotoCategory = (cat_id) => {
-        this.loadCategory(cat_id);
+        this.loadCategory(cat_id, 1);
+    }
+    
+    gotoPage = (page) => {
+        this.loadCategory(this.state.category.id, page);
+    }
+    
+    handleClickSelectAll = () => {
+        var newChecked = [];
+        for(var i=0; i < this.state.category.images.length; i++) {
+            newChecked.push(this.state.category.images[i].id);
+        }
+        this.setState({checked: newChecked});
+    }
+    
+    handleClickSelectNone = () => {
+        this.setState({checked: []});
     }
     
     handleClickShare = () => {
@@ -126,6 +157,11 @@ class App extends React.Component {
     };
     
     render() {
+        const { classes } = this.props;
+        
+        var pageCount = this.state.category.img_count > 0 ?
+            Math.trunc((this.state.category.img_count - 1) / IMG_PAGE_SIZE) + 1 : 1;
+        
         var selImages = [];
         for(var i=0; i < this.state.category.images.length; i++) {
             if(this.state.checked.indexOf(this.state.category.images[i].id) !== -1) {
@@ -136,10 +172,12 @@ class App extends React.Component {
         return (
             <div style={{textAlign: 'center', marginTop: 30}}>
                 <div style={{textAlign: 'right'}}>
+                    <span onClick={this.handleClickSelectAll} style={styleBtn}>Выбрать всё</span>
+                    <span onClick={this.handleClickSelectNone} style={styleBtn}>Снять выделение</span>
                     <span onClick={this.handleClickShare} style={styleBtn}>Встроить в блог</span>
                 </div>
                 
-                <Breadcrumbs style={{marginBottom: 40}} aria-label="breadcrumb">
+                <Breadcrumbs style={{marginBottom: 10}} aria-label="breadcrumb">
                     {this.state.category.id !== null && <Link color="inherit" onClick={() => this.gotoCategory()}>
                         ROOT
                     </Link>}
@@ -153,6 +191,13 @@ class App extends React.Component {
                     
                     <Typography style={{fontWeight: 'bold'}} color="textPrimary">{this.state.category.name}</Typography>
                 </Breadcrumbs>
+                
+                {this.state.category.img_count > 0 && <Pagination classes={{ul: classes.paginationUl}}
+                    count={pageCount}
+                    page={this.state.page}
+                    style={{marginBottom: 10}}
+                    color="primary"
+                    onChange={(event, page) => this.gotoPage(page)} />}
                 
                 {this.state.category.childCats.length > 0 && <Grid container spacing={3}>
                     {this.state.category.childCats.map(cat => {
@@ -197,6 +242,13 @@ class App extends React.Component {
                     })}
                 </Grid>}
                 
+                {this.state.category.img_count > 0 &&<Pagination classes={{ul: classes.paginationUl}}
+                    count={pageCount}
+                    page={this.state.page}
+                    style={{marginTop: 10}}
+                    color="primary"
+                    onChange={(event, page) => this.gotoPage(page)} />}
+                
                 <Dialog onClose={this.handleCloseShare} aria-labelledby="share-dialog-title" open={this.state.showShare}>
                     <DialogTitle id="share-dialog-title">Share</DialogTitle>
                     <ShareOptions images={selImages}/>
@@ -206,5 +258,5 @@ class App extends React.Component {
     }
 }
 
-export default App;
+export default withStyles(styles) (App);
 

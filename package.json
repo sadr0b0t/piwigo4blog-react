@@ -6,6 +6,7 @@
   "homepage": ".",
   "dependencies": {
     "@material-ui/core": "^4.9.1",
+    "@material-ui/lab": "^4.0.0-alpha.45",
     "react": "^16.3.0",
     "react-dom": "^16.3.0",
     "react-scripts": "1.0.17"
