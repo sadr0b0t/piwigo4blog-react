@@ -189,7 +189,9 @@ class App extends React.Component {
                         );
                     })}
                     
-                    <Typography style={{fontWeight: 'bold'}} color="textPrimary">{this.state.category.name}</Typography>
+                    <Typography style={{fontWeight: 'bold'}} color="textPrimary">{this.state.category.name}
+                        {this.state.category.img_count > 0 && <span> [{this.state.category.img_count}]</span>}
+                    </Typography>
                 </Breadcrumbs>
                 
                 {this.state.category.img_count > 0 && <Pagination classes={{ul: classes.paginationUl}}
@@ -208,9 +210,9 @@ class App extends React.Component {
                                     <div onClick={() => this.gotoCategory(cat.id)}>
                                         <div style={{height: 200}}>
                                             {cat.representativePicture != null &&
-                                                <img style={{maxHeight: 200, maxWidth: 300}}
-                                                    src={cat.representativePicture.thumb}
-                                                    alt={cat.representativePicture.thumb}/>
+                                                <img style={{maxWidth: 300, maxHeight: 200}}
+                                                    src={cat.representativePicture.urls.derivatives['xsmall'].url}
+                                                    alt={cat.representativePicture.file}/>
                                             }
                                         </div>
                                         <div>{cat.name}</div>
@@ -228,7 +230,7 @@ class App extends React.Component {
                             <Grid item xs={3}>
                                 <Paper style={{cursor: 'pointer', padding: 10}} onClick={() => this.handleToggle(img.id)}>
                                     <div style={{height: 200}}>
-                                        <img style={{maxHeight: 200, maxWidth: 300}} src={img.thumb} alt={img.thumb}/>
+                                        <img style={{maxWidth: 300, maxHeight: 200}} src={img.urls.derivatives['xsmall'].url} alt={img.file}/>
                                     </div>
                                     <div>
                                         <Checkbox
