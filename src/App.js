@@ -4,14 +4,23 @@ import Breadcrumbs from '@material-ui/core/Breadcrumbs';
 import Pagination from '@material-ui/lab/Pagination';
 import Typography from '@material-ui/core/Typography';
 import Link from '@material-ui/core/Link';
+import Box from '@material-ui/core/Box';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
-import Checkbox from '@material-ui/core/Checkbox';
 import Button from '@material-ui/core/Button';
+import Checkbox from '@material-ui/core/Checkbox';
+import TextField from '@material-ui/core/TextField';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
+import FormControl from '@material-ui/core/FormControl';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import InputLabel from '@material-ui/core/InputLabel';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
 
-import DialogTitle from '@material-ui/core/DialogTitle';
 import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogActions from '@material-ui/core/DialogActions';
 
 var styleBtn = {
     margin: 10,
@@ -30,32 +39,137 @@ const IMG_PAGE_SIZE = 100;
 
 class ShareOptions extends React.Component {
 
-    render() {
-        var imgWidth = 800;
+    constructor(props) {
+        super(props);
+        this.state = {
+            selImgSrc: "medium",
+            linkToGallery: true,
+            setImgWidth: true,
+            imgWidth: 800,
+            setImgHeight: false,
+            imgHeight: 600
+        };
+    }
     
+    handleImgSrcChange = (event) => {
+        this.setState({selImgSrc: event.target.value});
+    }
+    
+    handleLinkToGalleryChange = (event) => {
+        this.setState({linkToGallery: event.target.checked});
+    }
+    
+    handleSetImgWidthChange = (event) => {
+        this.setState({setImgWidth: event.target.checked});
+    }
+    
+    handleSetImgHeightChange = (event) => {
+        this.setState({setImgHeight: event.target.checked});
+    }
+    
+    handleWidthTxtChange = (event) => {
+        this.setState({imgWidth: event.target.value});
+    }
+    
+    handleHeightTxtChange = (event) => {
+        this.setState({imgHeight: event.target.value});
+    }
+    
+    handleCopyToClipboard = (text) => {
+        navigator.clipboard.writeText(text);
+    }
+    
+    render() {
         var embedTxt = "";
         for(var i = 0; i < this.props.images.length; i++) {
             var img = this.props.images[i];
-            embedTxt +=
-                "<a href='" + SITE_ROOT + "/picture.php?/" + img.id  + "'>" +
-                "<img src='" + SITE_ROOT + "/" + img.path + "' alt='" + img.file + "' width='" + imgWidth + "'/>" +
-                "</a>\n";
+            
+            var imgPath = (this.state.selImgSrc === "orig") ?
+                img.path : img.urls.derivatives[this.state.selImgSrc].url;
+            
+            var imgEmbedTxt = "<img src='" + SITE_ROOT + "/" + imgPath + "' alt='" + img.file + 
+                (this.state.setImgWidth ? ("' width='" + this.state.imgWidth) : "") +
+                (this.state.setImgHeight ? ("' height='" + this.state.imgHeight) : "") +
+                "'/>";
+            
+            // wrap img to link to image's page in gallery
+            if(this.state.linkToGallery) {
+                imgEmbedTxt  = "<a href='" + SITE_ROOT + "/picture.php?/" + img.id  + "'>" +
+                    imgEmbedTxt + "</a>";
+            }
+            
+            embedTxt += imgEmbedTxt + "\n";
         }
         
         return (
-        <div>
-            <div>share opts...</div>
-            <div>
-                <TextareaAutosize aria-label="empty textarea" placeholder="Empty">{embedTxt}</TextareaAutosize>;
-            </div>
-            <Button variant="contained" color="primary">Copy to clipboard</Button>
-        </div>
+            <Box display="flex" p={1}>
+                <Box p={1} flexGrow={1}>
+                    <TextareaAutosize placeholder="No selected images — nothing to embed" value={embedTxt}
+                        style={{width: "100%", height: 400, overflow: 'auto'}}/>
+                </Box>
+                
+                <Box p={1}>
+                    <Paper>
+                        <FormControl style={{margin: 20}}>
+                            <InputLabel id="select-imgsrc-label">Image source</InputLabel>
+                            <Select
+                                    labelId="select-imgsrc-label"
+                                    value={this.state.selImgSrc}
+                                    onChange={this.handleImgSrcChange}>
+                                <MenuItem value={"square"}>square (120x120)</MenuItem>
+                                <MenuItem value={"thumb"}>thumb (max dim = 144)</MenuItem>
+                                <MenuItem value={"2small"}>2small</MenuItem>
+                                <MenuItem value={"xsmall"}>xsmall</MenuItem>
+                                <MenuItem value={"small"}>small</MenuItem>
+                                <MenuItem value={"medium"}>medium</MenuItem>
+                                <MenuItem value={"large"}>large</MenuItem>
+                                <MenuItem value={"xlarge"}>xlarge</MenuItem>
+                                <MenuItem value={"xxlarge"}>xxlarge</MenuItem>
+                                <MenuItem value={"orig"}>orig</MenuItem>
+                            </Select>
+                            
+                            <span style={{marginTop: 20}}>
+                                <Checkbox color="primary" checked={this.state.setImgWidth}
+                                    onChange={this.handleSetImgWidthChange}/>
+                                <TextField
+                                    variant="filled"
+                                    disabled={!this.state.setImgWidth}
+                                    label="Image width"
+                                    defaultValue={this.state.imgWidth}
+                                    onChange={this.handleWidthTxtChange}/>
+                            </span>
+                            <span style={{marginTop: 20}}>
+                                <Checkbox color="primary" checked={this.state.setImgHeight}
+                                    onChange={this.handleSetImgHeightChange}/>
+                                <TextField
+                                    variant="filled"
+                                    disabled={!this.state.setImgHeight}
+                                    label="Image height"
+                                    defaultValue={this.state.imgHeight}
+                                    onChange={this.handleHeightTxtChange}/>
+                            </span>
+                            <FormControlLabel style={{marginTop: 20, marginLeft: 0}}
+                                control={
+                                    <Checkbox color="primary"
+                                        checked={this.state.linkToGallery}
+                                        onChange={this.handleLinkToGalleryChange}/>
+                                }
+                                label="Link to gallery"/>
+                        </FormControl>
+                    </Paper>
+                    
+                    <Button
+                        variant="contained" color="primary"
+                        style={{marginTop: 20}}
+                        onClick={() => this.handleCopyToClipboard(embedTxt)}>Copy to clipboard</Button>
+                </Box>
+            </Box>
         );
     }
 }
 
 class App extends React.Component {
-  
+    
     constructor(props) {
         super(props);
         this.state = {
@@ -171,6 +285,7 @@ class App extends React.Component {
         
         return (
             <div style={{textAlign: 'center', marginTop: 30}}>
+            
                 <div style={{textAlign: 'right'}}>
                     <span onClick={this.handleClickSelectAll} style={styleBtn}>Выбрать всё</span>
                     <span onClick={this.handleClickSelectNone} style={styleBtn}>Снять выделение</span>
@@ -251,14 +366,33 @@ class App extends React.Component {
                     color="primary"
                     onChange={(event, page) => this.gotoPage(page)} />}
                 
-                <Dialog onClose={this.handleCloseShare} aria-labelledby="share-dialog-title" open={this.state.showShare}>
-                    <DialogTitle id="share-dialog-title">Share</DialogTitle>
-                    <ShareOptions images={selImages}/>
+                    <DialogTitle>Share</DialogTitle>
+                <Dialog
+                        fullWidth={true} maxWidth='lg'
+                        open={this.state.showShare}
+                        onClose={this.handleCloseShare}>
+                    {/* DialogTitle uses Typography component with h2 tag by default, a kind of
+                       weird magic happens with h1 and h2 tags when used on admin page in Piwigo:
+                       - h1 added here get contents of page title defined in admin.tpl
+                       - h2 gets display: 'none' global CSS property
+                       - (also go to admin.tpl and try to change h2 to h1 inside titlePage
+                          for even more weird behavior) */}
+                    <DialogTitle disableTypography={true}>
+                        <Typography variant="h6" style={{textAlign: 'left', fontWeight: 'bold'}}>Share</Typography>
+                    </DialogTitle>
+                    <DialogContent>
+                        <ShareOptions images={selImages}/>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={this.handleCloseShare} color="primary">Close</Button>
+                    </DialogActions>
                 </Dialog>
             </div>
         );
     }
 }
 
+// https://stackoverflow.com/questions/56554586/how-to-use-usestyle-to-style-class-component-in-material-ui
+//export default App;
 export default withStyles(styles) (App);
 
