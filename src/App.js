@@ -263,7 +263,7 @@ class App extends React.Component {
         this.setState({showShare: false});
     }
     
-    handleToggle = (img_id) => {
+    handleToggleImg = (img_id) => {
         const currentIndex = this.state.checked.indexOf(img_id);
         const newChecked = [...this.state.checked];
 
@@ -320,15 +320,15 @@ class App extends React.Component {
                     <Button
                         variant="contained" color='primary'
                         style={{margin: 5, marginRight: 20}}
-                        onClick={this.handleClickShare}>Встроить в блог</Button>
+                        onClick={this.handleClickShare}>Embed to BLOG</Button>
                     <Button
                         variant="contained"
                         style={{margin: 5}}
-                        onClick={this.handleClickSelectAll}>Выбрать всё</Button>
+                        onClick={this.handleClickSelectAll}>Select ALL</Button>
                     <Button
                         variant="contained"
                         style={{margin: 5, marginRight: 20}}
-                        onClick={this.handleClickSelectNone}>Снять выделение</Button>
+                        onClick={this.handleClickSelectNone}>Select NONE</Button>
                     
                     <FormControlLabel
                         control={<Switch checked={this.state.pagesEnabled} onChange={this.togglePagesEnabled}/>}
@@ -369,7 +369,7 @@ class App extends React.Component {
                         return (
                             /* 12-column grid layout: xs=3 => 4 cols; https://material-ui.com/components/grid/ */
                             <Grid item xs={3}>
-                                <Paper style={{cursor: 'pointer', padding: 10}} onClick={() => this.handleToggle(img.id)}>
+                                <Paper style={{cursor: 'pointer', padding: 10}} onClick={() => this.handleToggleImg(img.id)}>
                                     <div style={{height: 200}}>
                                         <img style={{maxWidth: 300, maxHeight: 200}} src={img.urls.derivatives['xsmall'].url} alt={img.file}/>
                                     </div>
@@ -404,7 +404,7 @@ class App extends React.Component {
                        - (also go to admin.tpl and try to change h2 to h1 inside titlePage
                           for even more weird behavior) */}
                     <DialogTitle disableTypography={true}>
-                        <Typography variant="h6" style={{textAlign: 'left', fontWeight: 'bold'}}>Share</Typography>
+                        <Typography variant="h6" style={{textAlign: 'left', fontWeight: 'bold'}}>Share {selImages.length} images</Typography>
                     </DialogTitle>
                     <DialogContent>
                         <ShareOptions images={selImages}/>
