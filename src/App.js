@@ -9,6 +9,7 @@ import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
+import Switch from '@material-ui/core/Switch';
 import TextField from '@material-ui/core/TextField';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 import FormControl from '@material-ui/core/FormControl';
@@ -184,6 +185,7 @@ class App extends React.Component {
                 images: [],
                 img_count: 0
             },
+            pagesEnabled: true,
             page: 1
         };
         
@@ -213,10 +215,14 @@ class App extends React.Component {
     
     loadCategory = (cat_id, page) => {
         var query_str = '/plugins/piwigo4blog/api/category.php';
-        var img_params = "img_lim=" + IMG_PAGE_SIZE + "&img_offset=" + (IMG_PAGE_SIZE * (page-1));
+        var img_params = "";
+        if(this.state.pagesEnabled) {
+            img_params = "img_lim=" + IMG_PAGE_SIZE + "&img_offset=" + (IMG_PAGE_SIZE * (page-1));
+        }
+        
         if(cat_id !== undefined) {
-            query_str += '?id=' + cat_id + "&" + img_params;
-        } else {
+            query_str += '?id=' + cat_id + (img_params.length > 0 ? ("&" + img_params) : "");
+        } else if(img_params.length > 0) {
             query_str += '?' + img_params;
         }
         
@@ -268,11 +274,18 @@ class App extends React.Component {
         }
         
         this.setState({checked: newChecked});
-    };
+    }
+    
+    togglePagesEnabled = () => {
+        this.setState({pagesEnabled: !this.state.pagesEnabled}, () => {
+            this.loadCategory(this.state.category.id, 1);
+        });
+    }
     
     render() {
         const { classes } = this.props;
         
+        // would only be used if this.state.pagesEnabled == true
         var pageCount = this.state.category.img_count > 0 ?
             Math.trunc((this.state.category.img_count - 1) / IMG_PAGE_SIZE) + 1 : 1;
         
@@ -285,12 +298,6 @@ class App extends React.Component {
         
         return (
             <div style={{textAlign: 'center', marginTop: 30}}>
-            
-                <div style={{textAlign: 'right'}}>
-                    <span onClick={this.handleClickSelectAll} style={styleBtn}>Выбрать всё</span>
-                    <span onClick={this.handleClickSelectNone} style={styleBtn}>Снять выделение</span>
-                    <span onClick={this.handleClickShare} style={styleBtn}>Встроить в блог</span>
-                </div>
                 
                 <Breadcrumbs style={{marginBottom: 10}} aria-label="breadcrumb">
                     {this.state.category.id !== null && <Link color="inherit" onClick={() => this.gotoCategory()}>
@@ -309,7 +316,26 @@ class App extends React.Component {
                     </Typography>
                 </Breadcrumbs>
                 
-                {this.state.category.img_count > 0 && <Pagination classes={{ul: classes.paginationUl}}
+                {this.state.category.img_count > 0 && <div style={{textAlign: 'right', marginBottom: 10}}>
+                    <Button
+                        variant="contained" color='primary'
+                        style={{margin: 5, marginRight: 20}}
+                        onClick={this.handleClickShare}>Встроить в блог</Button>
+                    <Button
+                        variant="contained"
+                        style={{margin: 5}}
+                        onClick={this.handleClickSelectAll}>Выбрать всё</Button>
+                    <Button
+                        variant="contained"
+                        style={{margin: 5, marginRight: 20}}
+                        onClick={this.handleClickSelectNone}>Снять выделение</Button>
+                    
+                    <FormControlLabel
+                        control={<Switch checked={this.state.pagesEnabled} onChange={this.togglePagesEnabled}/>}
+                        label="pages"/>
+                </div>}
+                
+                {(this.state.pagesEnabled && this.state.category.img_count > 0) && <Pagination classes={{ul: classes.paginationUl}}
                     count={pageCount}
                     page={this.state.page}
                     style={{marginBottom: 10}}
@@ -359,7 +385,7 @@ class App extends React.Component {
                     })}
                 </Grid>}
                 
-                {this.state.category.img_count > 0 &&<Pagination classes={{ul: classes.paginationUl}}
+                {(this.state.pagesEnabled && this.state.category.img_count > 0) &&<Pagination classes={{ul: classes.paginationUl}}
                     count={pageCount}
                     page={this.state.page}
                     style={{marginTop: 10}}
