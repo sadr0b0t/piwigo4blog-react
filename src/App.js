@@ -23,12 +23,6 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogActions from '@material-ui/core/DialogActions';
 
-var styleBtn = {
-    margin: 10,
-    padding: 5,
-    borderStyle: 'solid',
-    cursor: 'pointer'
-}
 
 // https://stackoverflow.com/questions/56554586/how-to-use-usestyle-to-style-class-component-in-material-ui
 const styles = theme => ({
@@ -38,7 +32,7 @@ const styles = theme => ({
 const SITE_ROOT = window.location.protocol + "//" + window.location.host; //"https://fotki.sadrobot.su"
 const IMG_PAGE_SIZE = 100;
 
-class ShareOptions extends React.Component {
+class ShareOptionsPnl extends React.Component {
 
     constructor(props) {
         super(props);
@@ -103,13 +97,13 @@ class ShareOptions extends React.Component {
         }
         
         return (
-            <Box display="flex" p={1}>
-                <Box p={1} flexGrow={1}>
+            <Box display="flex">
+                <Box flexGrow={1}>
                     <TextareaAutosize placeholder="No selected images — nothing to embed" value={embedTxt}
-                        style={{width: "100%", height: 400, overflow: 'auto'}}/>
+                        style={{width: "98%", height: 400, overflow: 'auto'}}/>
                 </Box>
                 
-                <Box p={1}>
+                <Box>
                     <Paper>
                         <FormControl style={{margin: 20}}>
                             <InputLabel id="select-imgsrc-label">Image source</InputLabel>
@@ -169,13 +163,16 @@ class ShareOptions extends React.Component {
     }
 }
 
+
 class App extends React.Component {
     
     constructor(props) {
         super(props);
         this.state = {
             reply: '', 
-            showShare: false,
+            showShareDlg: false,
+            showImgDlg: false,
+            showImg: null,
             checked: [],
             category: {
                 id: null, name: 'ROOT', representativePictureId: -1, idUppercat: null,
@@ -256,11 +253,19 @@ class App extends React.Component {
     }
     
     handleClickShare = () => {
-        this.setState({showShare: true});
+        this.setState({showShareDlg: true});
     }
     
-    handleCloseShare = value => {
-        this.setState({showShare: false});
+    handleCloseShareDlg = value => {
+        this.setState({showShareDlg: false});
+    }
+    
+    handleShowImgDlg = (img) => {
+        this.setState({showImgDlg: true, showImg: img});
+    }
+    
+    handleCloseImgDlg = value => {
+        this.setState({showImgDlg: false});
     }
     
     handleToggleImg = (img_id) => {
@@ -268,9 +273,9 @@ class App extends React.Component {
         const newChecked = [...this.state.checked];
 
         if (currentIndex === -1) {
-          newChecked.push(img_id);
+            newChecked.push(img_id);
         } else {
-          newChecked.splice(currentIndex, 1);
+            newChecked.splice(currentIndex, 1);
         }
         
         this.setState({checked: newChecked});
@@ -295,6 +300,10 @@ class App extends React.Component {
                 selImages.push(this.state.category.images[i]);
             }
         }
+        
+        // show image, goto left/right
+        var showImgPrevInd = this.state.category.images.indexOf(this.state.showImg) - 1;
+        var showImgNextInd = this.state.category.images.indexOf(this.state.showImg) + 1;
         
         return (
             <div style={{textAlign: 'center', marginTop: 30}}>
@@ -369,11 +378,11 @@ class App extends React.Component {
                         return (
                             /* 12-column grid layout: xs=3 => 4 cols; https://material-ui.com/components/grid/ */
                             <Grid item xs={3}>
-                                <Paper style={{cursor: 'pointer', padding: 10}} onClick={() => this.handleToggleImg(img.id)}>
-                                    <div style={{height: 200}}>
+                                <Paper style={{cursor: 'pointer', padding: 10}}>
+                                    <div style={{height: 200}} onClick={() => this.handleShowImgDlg(img)}>
                                         <img style={{maxWidth: 300, maxHeight: 200}} src={img.urls.derivatives['xsmall'].url} alt={img.file}/>
                                     </div>
-                                    <div>
+                                    <div onClick={() => this.handleToggleImg(img.id)}>
                                         <Checkbox
                                             color="primary"
                                             checked={this.state.checked.indexOf(img.id) !== -1}/>
@@ -392,11 +401,10 @@ class App extends React.Component {
                     color="primary"
                     onChange={(event, page) => this.gotoPage(page)} />}
                 
-                    <DialogTitle>Share</DialogTitle>
-                <Dialog
+                {this.state.showShareDlg && <Dialog
                         fullWidth={true} maxWidth='lg'
-                        open={this.state.showShare}
-                        onClose={this.handleCloseShare}>
+                        open={this.state.showShareDlg}
+                        onClose={this.handleCloseShareDlg}>
                     {/* DialogTitle uses Typography component with h2 tag by default, a kind of
                        weird magic happens with h1 and h2 tags when used on admin page in Piwigo:
                        - h1 added here get contents of page title defined in admin.tpl
@@ -407,12 +415,59 @@ class App extends React.Component {
                         <Typography variant="h6" style={{textAlign: 'left', fontWeight: 'bold'}}>Share {selImages.length} images</Typography>
                     </DialogTitle>
                     <DialogContent>
-                        <ShareOptions images={selImages}/>
+                        <ShareOptionsPnl images={selImages}/>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={this.handleCloseShare} color="primary">Close</Button>
+                        <Button onClick={this.handleCloseShareDlg} color="primary">Close</Button>
                     </DialogActions>
-                </Dialog>
+                </Dialog>}
+                
+                {this.state.showImgDlg && <Dialog
+                        fullWidth={true} maxWidth='lg'
+                        open={this.state.showImgDlg}
+                        onClose={this.handleCloseImgDlg}>
+                    <DialogContent>
+                        <Paper style={{cursor: 'pointer', padding: 10}}>
+                            <Box display="flex">
+                                <Box style={{width: '10%', fontSize: '16pt', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center'}}
+                                    onClick = {
+                                        () => {
+                                            if(showImgPrevInd >= 0) {
+                                                this.handleShowImgDlg(this.state.category.images[showImgPrevInd]);
+                                            }
+                                        }
+                                    }> {(showImgPrevInd >= 0) ? "<" : ""} </Box>
+                                
+                                <Box flexGrow={1}
+                                        onClick={() => this.handleToggleImg(this.state.showImg.id)}>
+                                    <img
+                                        style={{maxWidth: '100%', maxHeight: 768}}
+                                        src={this.state.showImg.urls.derivatives['large'].url}
+                                        alt={this.state.showImg.file}/>
+                                </Box>
+                                <Box style={{width: '10%', fontSize: '16pt', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center'}}
+                                    onClick = {
+                                        () => {
+                                            if(showImgNextInd < this.state.category.images.length) {
+                                                this.handleShowImgDlg(this.state.category.images[showImgNextInd]);
+                                            }
+                                        }
+                                    }> {(showImgNextInd < this.state.category.images.length) ? ">" : ""} </Box>
+                            </Box>
+                            
+                            <div style={{fontSize: '14pt', marginTop: 10}}
+                                    onClick={() => this.handleToggleImg(this.state.showImg.id)}>
+                                <Checkbox
+                                    color="primary"
+                                    checked={this.state.checked.indexOf(this.state.showImg.id) !== -1}/>
+                                {this.state.showImg.name}
+                            </div>
+                        </Paper>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={this.handleCloseImgDlg} color="primary">Close</Button>
+                    </DialogActions>
+                </Dialog>}
             </div>
         );
     }
