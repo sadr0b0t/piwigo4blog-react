@@ -1,11 +1,11 @@
 # piwigo4blog-react
-Plugin for Piwigo self-hosted gallery: mass export images from gallery to embed to blog.
+Plugin for [Piwigo](https://piwigo.org) self-hosted gallery: mass export images from gallery wrapped in html tags to embed to blog post.
 
-This project is client ui code with React. Server plugin and API: https://github.com/sadr0b0t/piwigo4blog
+This project is client UI code with React. Server plugin and API: https://github.com/sadr0b0t/piwigo4blog
 
 [<img src="doc/screens/v0.1.x/piwigo4blog-share-02.png" width=800>](doc/screens/v0.1.x/piwigo4blog-share-02.png)
 
-Install plugin to your Piwigo instance, go to Plugins > Piwigo4blog
+Install plugin to your Piwigo instance, inside Admin section go to Plugins > Piwigo4blog
 
 Browse albums:
 
