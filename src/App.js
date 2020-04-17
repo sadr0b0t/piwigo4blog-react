@@ -29,7 +29,12 @@ const styles = theme => ({
     paginationUl: {justifyContent: 'flex-end'}
 });
 
-const SITE_ROOT = window.location.protocol + "//" + window.location.host; //"https://fotki.sadrobot.su"
+// We should use a tricky way to application root due to situations, when piwigo is running not
+// on site root like "https://my.domain.org/" but like subfolder like "https://my.domain.org/piwigo/"
+// see: https://stackoverflow.com/questions/23425909/javascript-jquery-get-root-url-of-website#27778372
+//const SITE_ROOT = window.location.protocol + "//" + window.location.host + "/"; //"https://my.domain.org/"
+const SITE_ROOT = window.location.href.match(/^.*\//)[0]; // either "https://my.domain.org/" or "https://my.domain.org/piwigo/"
+
 const IMG_PAGE_SIZE = 100;
 
 class ShareOptionsPnl extends React.Component {
@@ -82,14 +87,14 @@ class ShareOptionsPnl extends React.Component {
             var imgPath = (this.state.selImgSrc === "orig") ?
                 img.path : img.urls.derivatives[this.state.selImgSrc].url;
             
-            var imgEmbedTxt = "<img src='" + SITE_ROOT + "/" + imgPath + "' alt='" + img.file + 
+            var imgEmbedTxt = "<img src='" + SITE_ROOT + imgPath + "' alt='" + img.file + 
                 (this.state.setImgWidth ? ("' width='" + this.state.imgWidth) : "") +
                 (this.state.setImgHeight ? ("' height='" + this.state.imgHeight) : "") +
                 "'/>";
             
             // wrap img to link to image's page in gallery
             if(this.state.linkToGallery) {
-                imgEmbedTxt  = "<a href='" + SITE_ROOT + "/picture.php?/" + img.id  + "'>" +
+                imgEmbedTxt  = "<a href='" + SITE_ROOT + "picture.php?/" + img.id  + "'>" +
                     imgEmbedTxt + "</a>";
             }
             
@@ -211,7 +216,7 @@ class App extends React.Component {
     }
     
     loadCategory = (cat_id, page) => {
-        var query_str = '/plugins/piwigo4blog/api/category.php';
+        var query_str = 'plugins/piwigo4blog/api/category.php';
         var img_params = "";
         if(this.state.pagesEnabled) {
             img_params = "img_lim=" + IMG_PAGE_SIZE + "&img_offset=" + (IMG_PAGE_SIZE * (page-1));
