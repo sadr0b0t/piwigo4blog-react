@@ -191,6 +191,9 @@ class App extends React.Component {
             page: 1
         };
         
+        // https://stackoverflow.com/questions/43145549/how-react-programmatically-focus-input
+        this.showImgDlg = React.createRef();
+        
         this.gotoCategory();
     }
     
@@ -430,7 +433,27 @@ class App extends React.Component {
                 {this.state.showImgDlg && <Dialog
                         fullWidth={true} maxWidth='lg'
                         open={this.state.showImgDlg}
-                        onClose={this.handleCloseImgDlg}>
+                        onClose={this.handleCloseImgDlg}
+                        onEntered={/* for key navigation to work */ () => {this.showImgDlg.current.focus()}}
+                        ref={this.showImgDlg}
+                        onKeyDown={(event) => {
+                        // https://www.w3schools.com/jsref/event_onkeypress.asp
+                        // https://www.w3schools.com/jsref/obj_keyboardevent.asp
+                        // https://www.w3schools.com/jsref/event_key_key.asp
+                        // https://stackoverflow.com/questions/5597060/detecting-arrow-key-presses-in-javascript
+                        if(event.key === 'Escape' || event.key === 'Backspace') {
+                            this.handleCloseImgDlg();
+                        } else if(event.key === ' ' || event.key === 's') {
+                            this.handleToggleImg(this.state.showImg.id);
+                        } else if(event.key === 'ArrowLeft' || event.key === 'a') {
+                            if(showImgPrevInd >= 0) {
+                                this.handleShowImgDlg(this.state.category.images[showImgPrevInd]);
+                            }
+                        } else if(event.key === 'ArrowRight' || event.key === 'd') {
+                            if(showImgNextInd < this.state.category.images.length) {
+                                this.handleShowImgDlg(this.state.category.images[showImgNextInd]);
+                            }
+                        }}}>
                     <DialogContent>
                         <Paper style={{cursor: 'pointer', padding: 10}}>
                             <Box display="flex">
